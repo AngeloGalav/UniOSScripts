@@ -9,7 +9,7 @@
 #include <sys/wait.h>
 #include <dirent.h>
 
-
+// prima o poi lo finirò lo giuro
 char* delimiter = " // " ;
 struct stat file_stat_buf;
 char commands[64][64];
@@ -21,19 +21,10 @@ int main(int argc, char** argv)
     com = commands;
     int i = 1, s = 0, nprocess = 0;
     while (argv[i] != NULL){
-        if (strcmp(argv[i], "//") == 0 || argv[i+1] == NULL) {
-            // for (int j = s; j < i; j++){
-            //     printf("%s\n", argv[j]); 
-            // }
-            com[i+1] = NULL;
+        if (strcmp(argv[i], "//") == 0) {
+            com[i-s-1] = NULL;
             if ((pid[nprocess]=fork()) == 0) {
-                int k = 0;
-                while (com[k] != NULL) {
-                    printf("%s ", com[k]);
-                    k++; 
-                }
-                printf("\n"); 
-                //execvp(com[0], com);
+                execvp(com[0], com);
                 break;
             }
             nprocess++;
@@ -45,10 +36,16 @@ int main(int argc, char** argv)
         i++;
     }
 
-    // int status;
-    // for (i = 0; i < nprocess; i++) { 
-    //     if (pid[i] > 0) {
-    //         waitpid(pid[i], &status, 0);
-    //     }
-    // }
+    // esecuzione dell'ultimo processo
+    if ((pid[nprocess]=fork()) == 0) {
+        execvp(com[0], com);
+    }
+
+    // aspetta che gli altri processi finiscano
+    int status;
+    for (i = 0; i < nprocess; i++) { 
+        if (pid[i] > 0) {
+            waitpid(pid[i], &status, 0);
+        }
+    }
 }

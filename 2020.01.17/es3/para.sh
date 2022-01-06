@@ -1,19 +1,11 @@
 #!/bin/bash
-# A sample Bash script, by Ryan
 
-IN="$*"
-IFS="//" read -r -a arrIN <<< "$IN"
+IN="$*" #prende input l'intera stringa
+IFS="//" read -r -a arrIN <<< "$IN" #la suddivide in sottostringhe in base a //
 for(( j=0; j<${#arrIN[@]}; j++ ));
 do
     echo "evaluating $j to ${#arrIN[@]}"
-    eval ${arrIN[$j]} &
+    eval ${arrIN[$j]} & # esegue i programmi in modo concorrente
 done
 wait
 echo "commands over."
-
-
-# some_command &
-# P1=$!
-# other_command &
-# P2=$!
-# wait $P1 $P2

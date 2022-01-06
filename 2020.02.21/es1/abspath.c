@@ -11,8 +11,7 @@ int main(int argc, char** argv){
     char *res = realpath(argv[1], buf);
     if (res == NULL) printf("file not found.. \n");
     else {
-        //unlink(argv[1]); /* comment this line to replace the original link */
-        if (symlink(res, strcat(argv[1], "_new")))
-            printf("New symlink created for %s \n", res);
+        //unlink(argv[1]); /* uncomment this line to replace the original link */
+        symlink(res, strcat(argv[1], "_new")) // 0 if success
     }
 }

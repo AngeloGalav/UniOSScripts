@@ -11,21 +11,19 @@
 // when its name is specified in pthread_create()
 
 int value = -1; 
-int can_read;
-uint64_t sem_buf;
-int mutex;
-uint64_t mutex_buf;
-int can_write;
-uint64_t sem2_buf;
+int can_read = 0;
+uint64_t sem_buf = 0; // non so perché, ma se usi un solo buffer funziona, se ne usi due per semaforo no. 
+int can_write = 1;
 
 
 void* consumerf(void *vargp)
 {
+    int toread;
     while(1){
         read(can_read, &sem_buf, sizeof(uint64_t)); // ok2read.P()
-            int toread = value;
-        write(can_write, &sem2_buf, sizeof(uint64_t)); //ok2write.V()
-        printf("value is: %d \n", toread);
+        int toread = value;
+        printf("cons value is: %d \n", toread);
+        write(can_write, &sem_buf, sizeof(uint64_t)); //ok2write.V()
         sleep(rand() % 5 + 1); // aspetta da 1 a 5 secondi
     }
     return NULL;
@@ -33,10 +31,12 @@ void* consumerf(void *vargp)
 
 void* producerf(void *vargp)
 {
+    int val;
     while(1){
-        int val = rand() % 100;
-        read(can_write, &sem2_buf, sizeof(uint64_t)); // ok2write.P()
-            value = val;
+        val = rand() % 100;
+        read(can_write, &sem_buf, sizeof(uint64_t)); // ok2write.P()
+        printf("prod value is: %d \n", val);
+        value = val;
         write(can_read, &sem_buf, sizeof(uint64_t)); // ok2read.V()
         sleep(rand() % 5 + 1); // aspetta da 1 a 5 secondi
     }
@@ -46,8 +46,8 @@ void* producerf(void *vargp)
 int main()
 {
     srand(time(NULL));   // Initialization, should only be called once.
-    can_read = eventfd(0, EFD_SEMAPHORE);
     can_write = eventfd(1, EFD_SEMAPHORE);
+    can_read = eventfd(0, EFD_SEMAPHORE);
     pthread_t consumer, producer;
     printf("Initiate\n");
     pthread_create(&producer, NULL, producerf, NULL);

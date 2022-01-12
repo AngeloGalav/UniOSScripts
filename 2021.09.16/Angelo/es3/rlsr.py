@@ -1,5 +1,3 @@
-#non va....
-
 import os
 import sys
 

@@ -27,6 +27,7 @@
 
 int main(int argc, char *argv[])
 {
+    int counter = 0;
     sigset_t mask;
     int sfd;
     struct signalfd_siginfo fdsi;
@@ -41,9 +42,11 @@ int main(int argc, char *argv[])
     sigaddset(&mask, SIGUSR1);
     sigaddset(&mask, SIGUSR2);
 
+    printf("pid is: %d\n", father);
+
     /* Block signals so that they aren't handled
         according to their default dispositions. */
-    if (fork() != 0){
+    if (1){//fork() != 0){
         if (sigprocmask(SIG_BLOCK, &mask, NULL) == -1){
             handle_error("sigprocmask");
         }
@@ -59,56 +62,35 @@ int main(int argc, char *argv[])
                 handle_error("read");
             }
             
-            FILE* file;
-
             if (fdsi.ssi_signo == SIGUSR1) {
-                printf("Got SIGUSR1\n");
-                char name[32];
-                sprintf(name, "%d", fdsi.ssi_pid);
-                file = fopen(name, "a");
-                time_str = ctime(&mytime);
-                time_str[strlen(time_str)-1] = '\0';
-                fprintf(file, "USR1 %s\n", time_str);
+                counter++;
+                printf("counter: %d\n", counter);
 
             } else if (fdsi.ssi_signo == SIGUSR2) {
-                printf("Got SIGUSR2\n");
-                char name[32];
-                sprintf(name, "%d", fdsi.ssi_pid);
-                file = fopen(name, "a");
-                time_str = ctime(&mytime);
-                time_str[strlen(time_str)-1] = '\0';
-                fprintf(file, "USR2 %s\n", time_str);
+                counter--;
+                printf("counter: %d\n", counter);
             } else {
                 printf("Read unexpected signal\n");
             }
 
-            fclose(file);
         }
-    } else {
-        // creo altri 2 processi per testare
-        sleep(1);
-        for(int i = 0; i < 2; i++) {
-            if (fork() == 0){
-                printf("about to send signal to process %d, i'm process %d\n", father, getpid());
-                kill(father, SIGUSR1);
-                exit(0);
-            }
-        }
-
-        printf("about to send signal to process %d, i'm process %d\n", father, getpid());
-        kill(father, SIGUSR1);
-        sleep(1);
-        kill(father, SIGUSR2);
-        sleep(1);
-        kill(father, SIGUSR1);
-        sleep(1);
-        kill(father, SIGUSR1);
-        sleep(1);
-        kill(father, SIGUSR1);
-        sleep(1);
-        kill(father, SIGUSR1);
-        exit(0);
     } 
+    // else {
+    //     // creo altri 2 processi per testare
+    //     sleep(1);
+    //     kill(father, SIGUSR1);
+    //     sleep(1);
+    //     kill(father, SIGUSR2);
+    //     sleep(1);
+    //     kill(father, SIGUSR1);
+    //     sleep(1);
+    //     kill(father, SIGUSR1);
+    //     sleep(1);
+    //     kill(father, SIGUSR1);
+    //     sleep(1);
+    //     kill(father, SIGUSR1);
+    //     exit(0);
+    // } 
 
     return 0;
 }

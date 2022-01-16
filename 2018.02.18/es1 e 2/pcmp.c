@@ -9,17 +9,18 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <time.h>
 
 
-int compareFiles(FILE *fp1, FILE *fp2, long start, int length);
+int compareFiles(FILE *fp1, FILE *fp2, long start, int length, int i_proc);
 
 
 int main(int argc, char** argv)
 {
+    srand(time(NULL));
     int nprocess = 2;
     int choice = 0;
     if (strcmp("-j", argv[1]) == 0) {
-        printf("segfault here?\n");
         if (argv[3] == NULL || argv[4] == NULL){
             printf("not enough arguments for -j flag...\n");
             return 0;
@@ -57,10 +58,6 @@ int main(int argc, char** argv)
     
 
     int size = sz1/nprocess;
-
-    if (compareFiles(fp1, fp2, 0, sz1) == 1){
-        printf("files are different\n");
-    } else printf("files are the same\n");
     
     int returnval = 0;
     pid_t pid[nprocess];
@@ -68,19 +65,20 @@ int main(int argc, char** argv)
     for (int i = 0; i < nprocess; i++)
     {   // crea n processi...
          if ((pid[i]=fork()) == 0) { // con exit invia un valore al padre
+            int random = rand() % 4 +1;
             sleep(1);
             printf("process %d started\n", i);
-            exit(compareFiles(fp1, fp2, (sz1/nprocess)*i, sz1/nprocess));
-            break;
+            int ret = compareFiles(fp1, fp2, (sz1/nprocess)*i, sz1/nprocess, i);
+            exit(ret);
         }
     }
     
     for (int i = 0; i < nprocess; i++) { 
         if (pid[i] > 0) {
             waitpid(pid[i], &returnval, 0);
-            if (returnval == 1) {
+            if ((returnval >> 8) == 1) {
                 printf("files are really different!!\n");
-                for (int j = 0; j < nprocess; j++){
+                for (int j = i; j < nprocess; j++){
                     kill(pid[j], SIGTERM);
                 }
                 fclose(fp1);
@@ -96,7 +94,7 @@ int main(int argc, char** argv)
     return 0;
 }
 
-int compareFiles(FILE *fp1, FILE *fp2, long start, int length)
+int compareFiles(FILE *fp1, FILE *fp2, long start, int length, int i_proc)
 {
     int i = 1;
     fseek(fp1, start, SEEK_SET);
@@ -113,7 +111,7 @@ int compareFiles(FILE *fp1, FILE *fp2, long start, int length)
         // if fetched data is not equal then
         // error is incremented
         if (ch1 != ch2) {
-            printf("returned diff!!\n");
+            printf("process %d returned diff!!\n", i_proc);
             return 1;
         }
   
@@ -121,6 +119,6 @@ int compareFiles(FILE *fp1, FILE *fp2, long start, int length)
         ch1 = getc(fp1);
         ch2 = getc(fp2);
     }
-    printf("returned no diff..\n");
+    printf("process %d returned no diff..\n", i_proc);
     return 2;
 }
